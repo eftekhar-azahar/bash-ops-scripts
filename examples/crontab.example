@@ -1,0 +1,6 @@
+# Example schedule. Install with:  crontab -e   (adjust paths first)
+# m   h  dom mon dow  command
+*/15  *  *   *   *    /opt/bash-ops-scripts/scripts/disk_usage_alert.sh -w 80 -c 90 -l /var/log/ops/disk.log >/dev/null
+*/5   *  *   *   *    /opt/bash-ops-scripts/scripts/service_check.sh -f /opt/bash-ops-scripts/examples/services.conf >> /var/log/ops/services.log 2>&1
+0     7  *   *   0-4  /opt/bash-ops-scripts/scripts/system_health_check.sh > /var/log/ops/health_$(date +\%F).txt
+30    1  *   *   *    /opt/bash-ops-scripts/scripts/backup_rotate.sh -s /etc -d /backup/etc -k 14 >> /var/log/ops/backup.log 2>&1
