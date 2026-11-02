@@ -45,7 +45,7 @@ read -r disk_pct disk_mount < <(df -P -x tmpfs -x devtmpfs -x squashfs -x overla
     | awk 'NR > 1 { gsub("%", "", $5); if ($5 + 0 >= max) { max = $5 + 0; m = $6 } } END { print max + 0, m }')
 disk_mount=${disk_mount:-/}
 
-zombies=$(ps -eo stat= | grep -c '^Z' || true)
+zombies=$(ps -eo stat= | awk '/^Z/ { n++ } END { print n + 0 }')
 
 s_load=$(grade "$load_per_core" "$LOAD_WARN" "$LOAD_CRIT")
 s_mem=$(grade "$mem_pct" "$MEM_WARN" "$MEM_CRIT")

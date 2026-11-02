@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Functional tests for the scripts. Run: ./tests/run_tests.sh
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 S=scripts
 pass=0; fail=0
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
@@ -11,7 +11,7 @@ check() {  # check "<name>" <expected-exit> <command...>
     local out got
     out=$("$@" 2>&1); got=$?
     if [[ "$got" == "$want" ]]; then pass=$((pass+1)); echo "PASS  $name"
-    else fail=$((fail+1)); echo "FAIL  $name (exit $got, wanted $want)"; echo "$out" | sed 's/^/      /'; fi
+    else fail=$((fail+1)); echo "FAIL  $name (exit $got, wanted $want)"; while IFS= read -r line; do echo "      $line"; done <<< "$out"; fi
 }
 contains() {  # contains "<name>" "<text>" <command...>
     local name=$1 text=$2; shift 2
@@ -46,7 +46,7 @@ check    "needs a file"                    3 "$S"/log_error_scan.sh
 
 echo "-- backup_rotate"
 mkdir -p "$tmp/src/data"; echo hello > "$tmp/src/data/a.txt"
-for i in 1 2 3 4; do "$S"/backup_rotate.sh -s "$tmp/src" -d "$tmp/bk" -k 2 >/dev/null; sleep 1.1; done
+for _ in 1 2 3 4; do "$S"/backup_rotate.sh -s "$tmp/src" -d "$tmp/bk" -k 2 >/dev/null; sleep 1.1; done
 n=$(find "$tmp/bk" -name 'src_*.tar.gz' | wc -l)
 check    "keeps only 2 archives"           0 test "$n" -eq 2
 check    "checksums verify"                0 bash -c "cd '$tmp/bk' && sha256sum -c --quiet ./*.sha256"

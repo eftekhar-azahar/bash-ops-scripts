@@ -58,6 +58,15 @@ check_http() {
     echo "HTTP ${code:-000}"; return 1
 }
 
+run_check() {
+    case "$1" in
+        service) check_service "$2" ;;
+        process) check_process "$2" ;;
+        tcp)     check_tcp "$2" ;;
+        http)    check_http "$2" ;;
+    esac
+}
+
 overall=$STATUS_OK; total=0; failed=0
 printf '%-6s %-8s %-40s %s\n' "STATUS" "TYPE" "TARGET" "DETAIL"
 
@@ -65,13 +74,10 @@ while read -r kind target _; do
     [[ -z "${kind:-}" || "$kind" == \#* ]] && continue
     total=$((total + 1))
     case "$kind" in
-        service) fn=check_service ;;
-        process) fn=check_process ;;
-        tcp)     fn=check_tcp ;;
-        http)    fn=check_http ;;
-        *)       die "unknown check type '$kind' in $config" ;;
+        service|process|tcp|http) ;;
+        *) die "unknown check type '$kind' in $config" ;;
     esac
-    if detail=$($fn "$target"); then s=$STATUS_OK; else s=$STATUS_CRIT; failed=$((failed + 1)); fi
+    if detail=$(run_check "$kind" "$target"); then s=$STATUS_OK; else s=$STATUS_CRIT; failed=$((failed + 1)); fi
     overall=$(worst "$overall" "$s")
     printf '%-6s %-8s %-40s %s\n' "$(label_for "$s")" "$kind" "$target" "$detail"
 done < "$config"
